@@ -56,20 +56,24 @@ if ask "Install the desktop launcher?"; then
   if [[ -z $exe ]]; then
     echo "rekordbox isn't installed yet, so there's no icon to extract; skipping. Re-run 'make install' after step 3."
   else
-    mkdir -p "$ROOT/icons"
-    docker run --rm -v "$(dirname "$exe"):/rb:ro" -v "$ROOT/icons:/out" $IMAGE \
-      bash -c 'cd /out && rm -f rb*.png && wrestool -x -t 14 /rb/rekordbox.exe -o rb.ico && icotool -x rb.ico'
-    for png in "$ROOT"/icons/rb_*x32.png; do
+    # Extract every size from rekordbox.exe into a scratch dir, then install them
+    # into the per-user icon theme (XDG standard location).
+    tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
+    docker run --rm -v "$(dirname "$exe"):/rb:ro" -v "$tmp:/out" $IMAGE \
+      bash -c 'cd /out && wrestool -x -t 14 /rb/rekordbox.exe -o rb.ico && icotool -x rb.ico'
+    for png in "$tmp"/rb_*x32.png; do
       s="$(basename "$png" | sed -E 's/rb_[0-9]+_([0-9]+)x.*/\1/')"
       install -Dm644 "$png" "$ICONS/${s}x${s}/apps/rekordbox.png"
+      echo "  $ICONS/${s}x${s}/apps/rekordbox.png"
     done
+    touch "$ICONS"   # newer mtime makes GTK/GNOME rescan the theme dir
     install -Dm644 /dev/stdin "$APPS/rekordbox.desktop" <<EOF
 [Desktop Entry]
 Type=Application
 Name=rekordbox
 Comment=rekordbox 7 in Docker (patched Wine)
 Exec=$ROOT/run.sh
-Icon=rekordbox
+Icon=$ICONS/256x256/apps/rekordbox.png
 Terminal=false
 Categories=AudioVideo;Audio;Music;
 StartupWMClass=rekordbox.exe
