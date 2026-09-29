@@ -74,6 +74,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN (userdel -r ubuntu 2>/dev/null || true) \
  && groupadd -g $GID dj && useradd -m -u $UID -g $GID -G audio -s /bin/bash dj
 RUN install -d -o dj -g dj -m 700 /run/user/$UID
+COPY files/xdg-open /usr/local/bin/xdg-open
 USER dj
 WORKDIR /home/dj
 ENV WINEDEBUG=-all XDG_RUNTIME_DIR=/run/user/1000

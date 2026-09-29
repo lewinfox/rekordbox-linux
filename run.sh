@@ -14,7 +14,8 @@ MUSIC="${MUSIC:-$HOME/Music}"
 RUNTIME="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 
 args=(
-  --rm --name rekordbox --hostname rekordbox
+  --rm --name rekordbox
+  --network host                               # OAuth logins redirect the browser to 127.0.0.1:5500x
   --ipc=host                                   # X11 shared memory
   --cap-add SYS_NICE --ulimit rtprio=95 --ulimit memlock=-1
   # screen (XWayland)
@@ -50,7 +51,28 @@ for h in /dev/hidraw*; do [[ -e $h ]] && args+=(--device "$h"); done
 [[ -n "${WINEDEBUG:-}" ]] && args+=(-e WINEDEBUG="$WINEDEBUG")
 [[ -t 0 ]] && args+=(-it)
 
+# Browser bridge: the container's xdg-open writes URLs to this FIFO, and we open
+# http(s) ones in the host browser (logins to SoundCloud etc.). Nothing else is
+# accepted, so the container can't make the host open files or run handlers.
+BRIDGE="$DATA/open-url.fifo"
+rm -f "$BRIDGE" && mkfifo -m 600 "$BRIDGE"
+args+=(-v "$BRIDGE:/run/open-url")
+(
+  # Outer loop reopens the FIFO after each writer closes it (EOF).
+  while true; do
+    while read -r url; do
+      case "$url" in
+        http://*|https://*) xdg-open "$url" >/dev/null 2>&1 & ;;
+        *) echo "run.sh: ignored non-web URL from container: $url" >&2 ;;
+      esac
+    done < "$BRIDGE"
+  done
+) &
+LISTENER=$!
+trap 'kill $LISTENER 2>/dev/null; rm -f "$BRIDGE"' EXIT
+
 if [[ "${1:-}" == bash ]]; then
-  exec docker run "${args[@]}" rekordbox-wine bash
+  docker run "${args[@]}" rekordbox-wine bash
+else
+  docker run "${args[@]}" rekordbox-wine rekordbox-wine "$@"
 fi
-exec docker run "${args[@]}" rekordbox-wine rekordbox-wine "$@"
