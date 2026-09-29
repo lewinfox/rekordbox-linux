@@ -25,9 +25,9 @@ set -e
 export WINEPREFIX=\$HOME/.local/share/rekordbox-wine/prefix
 W=\$HOME/.local/share/rekordbox-wine/wine/bin
 export WINESERVER=\$W/wineserver WINEDEBUG=err+all
-echo "==> Windows version was: \$(\$W/wine winecfg /v 2>/dev/null)"
+echo "==> Windows version was: \$(WINEDEBUG=-all \$W/wine winecfg /v 2>&1 | tr -d "\\r")"
 \$W/wine winecfg /v win11
-echo "==> Windows version now: \$(\$W/wine winecfg /v 2>/dev/null)"
+echo "==> Windows version now: \$(WINEDEBUG=-all \$W/wine winecfg /v 2>&1 | tr -d "\\r")"
 if ls "\$WINEPREFIX/drive_c/Program Files (x86)/Microsoft/EdgeWebView/Application/"[0-9]* >/dev/null 2>&1; then
   echo "==> WebView2 already installed; skipping the installer"
 else
