@@ -62,3 +62,12 @@ appears in rekordbox as `C:\users\dj\Music`.
   seem to need it.
 - Debugging: `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9222 ./run.sh`
   exposes DevTools for the embedded panes (once WebView2 stays up).
+
+## Licence
+
+The scripts and docs in this repo are MIT (see `LICENSE`). Nothing third-party is
+included: the image build downloads wine-staging (LGPL), the
+[rekordbox-wine](https://github.com/MrNorm/rekordbox-wine) patches (LGPL-2.1 / MIT) and
+Microsoft's core fonts (accepting their EULA), and `run.sh --install` downloads
+rekordbox itself from rekordbox.com. Don't publish a built image without checking
+those licences.
