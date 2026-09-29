@@ -64,8 +64,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends unzip mesa-util
     libgl1:i386 libglx-mesa0:i386 libegl1:i386 libegl-mesa0:i386 libgl1-mesa-dri:i386 mesa-vulkan-drivers:i386 libvulkan1:i386 && rm -rf /var/lib/apt/lists/*
 
 # GStreamer decoders: Wine decodes MP3/AAC through these (plugins-base alone reads no MP3).
+# icoutils: pulls the app icon out of rekordbox.exe for the desktop launcher.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-tools \
+    icoutils \
  && rm -rf /var/lib/apt/lists/*
 
 # Non-root user matching the host uid, in the host's audio group (gid 29).

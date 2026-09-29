@@ -7,10 +7,9 @@ built into an Ubuntu 24.04 image with wine-staging 11.16.
 ## Use
 
 ```sh
-sudo ./host-setup.sh          # once: ntsync, snd_seq_dummy blacklist, DDJ udev rule
-docker build -t rekordbox-wine .
-./run.sh --install --latest   # once: download + install rekordbox (press Return on the language dialog)
-./run.sh                      # launch
+make install                  # interactive: image, host setup, rekordbox, desktop launcher
+make container                # just (re)build the image
+./run.sh                      # launch (or "rekordbox" in the app menu)
 ./run.sh --check              # health check
 ./run.sh bash                 # shell in the container
 ```
