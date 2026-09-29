@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Interactive installer: build the image, set up the host, install rekordbox,
-# add a desktop launcher. Asks before each step. Run via `make install`.
+# WebView2 and link handlers for streaming logins, and a desktop launcher. Asks before each step. Run via `make install`.
 set -euo pipefail
 cd "$(dirname "$(readlink -f "$0")")"
 ROOT="$PWD"
@@ -17,7 +17,7 @@ rekordbox_exe() {
 }
 
 # 1. Image -------------------------------------------------------------------
-bold "1/4  Build the Docker image"
+bold "1/6  Build the Docker image"
 if docker image inspect $IMAGE >/dev/null 2>&1; then
   echo "An image '$IMAGE' already exists. Rebuilding is quick unless the Dockerfile's early steps changed."
 else
@@ -28,7 +28,7 @@ if ask "Build the image now?"; then
 fi
 
 # 2. Host setup --------------------------------------------------------------
-bold "2/4  Host setup (needs sudo)"
+bold "2/6  Host setup (needs sudo)"
 echo "Loads ntsync, blacklists snd_seq_dummy, and adds a udev rule for Pioneer controllers."
 echo "Writes three files under /etc; see host-setup.sh."
 if ask "Run host-setup.sh with sudo now?"; then
@@ -36,7 +36,7 @@ if ask "Run host-setup.sh with sudo now?"; then
 fi
 
 # 3. rekordbox itself --------------------------------------------------------
-bold "3/4  Install rekordbox"
+bold "3/6  Install rekordbox"
 if exe="$(rekordbox_exe)" && [[ -n $exe ]]; then
   echo "Already installed: ${exe#"$PREFIX/drive_c/"}"
   echo "(rekordbox updates itself from inside the app.)"
@@ -48,8 +48,28 @@ else
   fi
 fi
 
-# 4. Desktop launcher --------------------------------------------------------
-bold "4/4  Desktop launcher"
+# 4. WebView2 ----------------------------------------------------------------
+bold "4/6  WebView2 (for SoundCloud, Beatport and other streaming logins)"
+echo "Installs Microsoft's WebView2 runtime into the Wine prefix (~200 MB download) and sets"
+echo "Wine to report Windows 11. Without it rekordbox says 'reinstall rekordbox' at login."
+if [[ -z "$(rekordbox_exe)" ]]; then
+  echo "rekordbox isn't installed yet; skipping. Re-run 'make install' after step 3."
+elif ask "Install WebView2 now? (close rekordbox first)"; then
+  "$ROOT/webview2.sh"
+fi
+
+# 5. Link handlers -----------------------------------------------------------
+bold "5/6  rekordboxdj:// link handlers (Spotify login; not working end to end yet)"
+echo "Registers rekordboxdj:// in the Wine prefix and on this machine, so the browser can"
+echo "hand login redirects back to rekordbox. Re-run after a rekordbox update."
+if [[ -z "$(rekordbox_exe)" ]]; then
+  echo "rekordbox isn't installed yet; skipping. Re-run 'make install' after step 3."
+elif ask "Register the link handlers now? (close rekordbox first)"; then
+  "$ROOT/link-handlers.sh"
+fi
+
+# 6. Desktop launcher --------------------------------------------------------
+bold "6/6  Desktop launcher"
 echo "Adds 'rekordbox' to your app menu, with the icon taken from rekordbox.exe."
 if ask "Install the desktop launcher?"; then
   exe="$(rekordbox_exe)"

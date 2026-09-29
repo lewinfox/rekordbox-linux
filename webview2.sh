@@ -14,7 +14,7 @@ if docker ps --format '{{.Names}}' | grep -qx rekordbox; then
   echo "rekordbox is running; close it first." >&2; exit 1
 fi
 
-if [[ ! -f $CACHE/$EXE ]]; then
+if [[ ! -f $CACHE/$EXE ]] && ! ls "data/rekordbox-wine/prefix/drive_c/Program Files (x86)/Microsoft/EdgeWebView/Application/"[0-9]* >/dev/null 2>&1; then
   echo "==> Downloading the WebView2 standalone installer (~200 MB)"
   curl -fL --progress-bar -o "$CACHE/$EXE.part" "https://go.microsoft.com/fwlink/?linkid=2124701"
   mv "$CACHE/$EXE.part" "$CACHE/$EXE"
@@ -28,8 +28,12 @@ export WINESERVER=\$W/wineserver WINEDEBUG=err+all
 echo "==> Windows version was: \$(\$W/wine winecfg /v 2>/dev/null)"
 \$W/wine winecfg /v win11
 echo "==> Windows version now: \$(\$W/wine winecfg /v 2>/dev/null)"
-echo "==> Running the WebView2 installer (silent; can take several minutes, errors show below)"
-\$W/wine \$HOME/.cache/$EXE /silent /install || echo "installer exit code: \$?"
+if ls "\$WINEPREFIX/drive_c/Program Files (x86)/Microsoft/EdgeWebView/Application/"[0-9]* >/dev/null 2>&1; then
+  echo "==> WebView2 already installed; skipping the installer"
+else
+  echo "==> Running the WebView2 installer (silent; can take several minutes, errors show below)"
+  \$W/wine \$HOME/.cache/$EXE /silent /install || echo "installer exit code: \$?"
+fi
 echo "==> Making WebView2 itself see Windows 7 (as Proton and Vinegar do); without it msedgewebview2.exe dies at startup"
 \$W/wine reg add "HKCU\\\\Software\\\\Wine\\\\AppDefaults\\\\msedgewebview2.exe" /v Version /d win7 /f
 echo "==> Disabling the Edge updater (its services never exit, and an update could break WebView2 under Wine)"

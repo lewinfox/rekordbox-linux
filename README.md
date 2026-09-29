@@ -7,7 +7,7 @@ built into an Ubuntu 24.04 image with wine-staging 11.16.
 ## Use
 
 ```sh
-make install                  # interactive: image, host setup, rekordbox, desktop launcher
+make install                  # interactive: image, host setup, rekordbox, WebView2, link handlers, launcher
 make container                # just (re)build the image
 ./run.sh                      # launch (or "rekordbox" in the app menu)
 ./run.sh --check              # health check
@@ -39,10 +39,9 @@ appears in rekordbox as `C:\users\dj\Music`.
   `http://localhost:5500x/redirect.html`; `--network host` lets that reach rekordbox.
   Needs WebView2 (`make webview2`), without which rekordbox says "reinstall rekordbox".
 - **Spotify: not working yet.** It redirects to `rekordboxdj://auth/redirect?code=...`.
-  Getting that far needs the `rekordboxdj` protocol registered in the prefix (done by hand
-  so far, under `HKLM\Software\Classes\rekordboxdj`, command `"...\rekordbox.exe" %1`)
-  and `rekordboxdj-handler.sh` registered on the host as the `x-scheme-handler/rekordboxdj`
-  handler. The link then reaches the running rekordbox intact (a second rekordbox.exe
+  Getting that far needs the `rekordboxdj` protocol registered in the prefix and
+  `rekordboxdj-handler.sh` registered on the host as the `x-scheme-handler/rekordboxdj`
+  handler (`make links`, or step 5 of `make install`; re-run after a rekordbox update). The link then reaches the running rekordbox intact (a second rekordbox.exe
   sends it by WM_COPYDATA to the main instance's `JUCEWindow`), but rekordbox never acts
   on it. Cause unknown.
 - WebView2's own process (`msedgewebview2.exe`) still exits at startup when a service pane
