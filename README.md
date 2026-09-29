@@ -42,8 +42,8 @@ appears in rekordbox as `C:\users\dj\Music`.
   detects FAT32 by reading its boot sector. Keyboards etc. get no hidraw node.
 - `run.sh` runs the container with AppArmor unconfined so Wine can reach UDisks on the
   system D-Bus, and bind-mounts `/dev/snd` so a controller plugged in later appears.
-- **Known issue:** a stick already plugged in at launch can be missed, because Wine scans
-  before devmirror's first pass. Replug it, or add the startup wait (see git log).
+- `run.sh` waits for devmirror's first pass before starting Wine, so a stick that is already
+  plugged in at launch gets a drive letter too.
 
 ## Streaming-service logins
 

@@ -89,5 +89,9 @@ trap 'kill $LISTENER $DEVMIRROR 2>/dev/null; rm -f "$BRIDGE"' EXIT
 if [[ "${1:-}" == bash ]]; then
   docker run "${args[@]}" rekordbox-wine bash
 else
-  docker run "${args[@]}" rekordbox-wine rekordbox-wine "$@"
+  # Wait (up to 10 s) for devmirror's first pass, so Wine's startup drive scan finds
+  # sticks that are already plugged in.
+  docker run "${args[@]}" rekordbox-wine sh -c \
+    'for i in $(seq 50); do [ -e /dev/.devmirror-ready ] && break; sleep 0.2; done; exec rekordbox-wine "$@"' \
+    rekordbox-wine "$@"
 fi

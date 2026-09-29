@@ -25,6 +25,7 @@ while :; do
     case $n in /dev/sd*) s=/sys/class/block ;; *) s=/sys/class/hidraw ;; esac
     [ -e "$s/${n##*/}" ] || rm -f "$n"
   done
+  touch /dev/.devmirror-ready   # run.sh waits for the first pass before starting Wine
   sleep 1
 done
 
