@@ -49,7 +49,7 @@ for g in video render; do gid="$(getent group $g | cut -d: -f3)" && args+=(--gro
 for h in /dev/hidraw*; do [[ -e $h ]] && args+=(--device "$h"); done
 
 [[ -n "${WINEDEBUG:-}" ]] && args+=(-e WINEDEBUG="$WINEDEBUG")
-[[ -t 0 ]] && args+=(-it)
+if [[ -t 0 ]]; then args+=(-it); elif [[ "${1:-}" == bash ]]; then args+=(-i); fi   # -i: allow piping commands into ./run.sh bash
 
 # Browser bridge: the container's xdg-open writes URLs to this FIFO, and we open
 # http(s) ones in the host browser (logins to SoundCloud etc.). Nothing else is
