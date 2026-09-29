@@ -18,12 +18,15 @@ args=(
   --network host                               # OAuth logins redirect the browser to 127.0.0.1:5500x
   --ipc=host                                   # X11 shared memory
   --cap-add SYS_NICE --ulimit rtprio=95 --ulimit memlock=-1
+  --security-opt apparmor=unconfined           # lets Wine reach UDisks on the system D-Bus (USB drives)
   # screen (XWayland)
   -e DISPLAY="${DISPLAY:-:0}" -v /tmp/.X11-unix:/tmp/.X11-unix:ro
   # sound: raw ALSA for the controller, PipeWire for the laptop speakers
-  --device /dev/snd
+  -v /dev/snd:/dev/snd --device-cgroup-rule='c 116:* rmw'   # live, so a controller plugged in later appears
   # USB + device enumeration (wineusb, winebus)
   -v /dev/bus/usb:/dev/bus/usb --device-cgroup-rule='c 189:* rmw'
+  # read-only raw access to USB disks (Wine detects FAT32 from the boot sector)
+  --device-cgroup-rule='b 8:* r'
   -v /run/udev:/run/udev:ro
   # data
   -v "$DATA/rekordbox-wine:/home/dj/.local/share/rekordbox-wine"
@@ -46,7 +49,10 @@ for g in video render; do gid="$(getent group $g | cut -d: -f3)" && args+=(--gro
 
 # Fast Wine sync (sudo modprobe ntsync) and the controller's HID nodes
 [[ -e /dev/ntsync ]] && args+=(--device /dev/ntsync)
-for h in /dev/hidraw*; do [[ -e $h ]] && args+=(--device "$h"); done
+
+# hidraw nodes are created by files/devmirror (Pioneer devices only); allow their major here
+HIDRAW_MAJOR="$(awk '$2=="hidraw"{print $1}' /proc/devices)"
+[[ -n $HIDRAW_MAJOR ]] && args+=(--device-cgroup-rule="c $HIDRAW_MAJOR:* rw")
 
 [[ -n "${WINEDEBUG:-}" ]] && args+=(-e WINEDEBUG="$WINEDEBUG")
 # e.g. --remote-debugging-port=9222 to inspect rekordbox's embedded web panes
@@ -71,7 +77,14 @@ args+=(-v "$BRIDGE:/run/open-url")
   done
 ) &
 LISTENER=$!
-trap 'kill $LISTENER 2>/dev/null; rm -f "$BRIDGE"' EXIT
+
+# Start files/devmirror as root once the container is up (see that file for why).
+(
+  for _ in $(seq 60); do docker exec rekordbox true 2>/dev/null && break; sleep 1; done
+  exec docker exec -u root rekordbox /usr/local/bin/devmirror
+) >/dev/null 2>&1 &
+DEVMIRROR=$!
+trap 'kill $LISTENER $DEVMIRROR 2>/dev/null; rm -f "$BRIDGE"' EXIT
 
 if [[ "${1:-}" == bash ]]; then
   docker run "${args[@]}" rekordbox-wine bash

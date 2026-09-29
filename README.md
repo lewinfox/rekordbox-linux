@@ -32,6 +32,19 @@ appears in rekordbox as `C:\users\dj\Music`.
 - `--check` warnings about udev rules, ntsync-at-boot and rtkit look inside the container;
   `host-setup.sh` handles them on the host.
 
+## USB sticks and controller hotplug
+
+- Sticks must be **FAT32** (Wine can't report exFAT, so rekordbox rejects it as badly
+  formatted). One msdos partition, FAT32, e.g. labelled `REKORDBOX`.
+- `files/devmirror` runs as root in the container (started by `run.sh`) and mirrors
+  host `/dev/sd*` (read-only) and Pioneer-only `/dev/hidraw*` nodes from sysfs as devices
+  come and go. Wine only gives a stick a drive letter if its `/dev/sdX1` exists, and
+  detects FAT32 by reading its boot sector. Keyboards etc. get no hidraw node.
+- `run.sh` runs the container with AppArmor unconfined so Wine can reach UDisks on the
+  system D-Bus, and bind-mounts `/dev/snd` so a controller plugged in later appears.
+- **Known issue:** a stick already plugged in at launch can be missed, because Wine scans
+  before devmirror's first pass. Replug it, or add the startup wait (see git log).
+
 ## Streaming-service logins
 
 - **SoundCloud, Beatport: work.** rekordbox opens the login in the host browser (via

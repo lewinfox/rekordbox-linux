@@ -109,7 +109,7 @@ bold "Next"
 cat <<EOF
   Launch:        rekordbox from the app menu, or $ROOT/run.sh
   Health check:  $ROOT/run.sh --check
-  Controller:    plug the DDJ-400 in BEFORE launching (Docker only sees devices present at start)
+  Controller:    plug the DDJ-400 in at any time (but Rekordbox may need a restart to pick it up)
   Music:         ~/Music appears in rekordbox as C:\\users\\dj\\Music
                  (File > Import > Import Folder)
   Data:          $ROOT/data  (Wine prefix + rekordbox library; back this up)
