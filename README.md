@@ -31,3 +31,22 @@ appears in rekordbox as `C:\users\dj\Music`.
   rebuilds its private Wine tree but only checks patch markers, not contents.
 - `--check` warnings about udev rules, ntsync-at-boot and rtkit look inside the container;
   `host-setup.sh` handles them on the host.
+
+## Streaming-service logins
+
+- **SoundCloud, Beatport: work.** rekordbox opens the login in the host browser (via
+  `files/xdg-open` and the FIFO in `run.sh`), which redirects to
+  `http://localhost:5500x/redirect.html`; `--network host` lets that reach rekordbox.
+  Needs WebView2 (`make webview2`), without which rekordbox says "reinstall rekordbox".
+- **Spotify: not working yet.** It redirects to `rekordboxdj://auth/redirect?code=...`.
+  Getting that far needs the `rekordboxdj` protocol registered in the prefix (done by hand
+  so far, under `HKLM\Software\Classes\rekordboxdj`, command `"...\rekordbox.exe" %1`)
+  and `rekordboxdj-handler.sh` registered on the host as the `x-scheme-handler/rekordboxdj`
+  handler. The link then reaches the running rekordbox intact (a second rekordbox.exe
+  sends it by WM_COPYDATA to the main instance's `JUCEWindow`), but rekordbox never acts
+  on it. Cause unknown.
+- WebView2's own process (`msedgewebview2.exe`) still exits at startup when a service pane
+  opens, even with the per-app Windows 7 override Proton uses. Logins that work don't
+  seem to need it.
+- Debugging: `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9222 ./run.sh`
+  exposes DevTools for the embedded panes (once WebView2 stays up).

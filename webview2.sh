@@ -30,6 +30,8 @@ echo "==> Windows version was: \$(\$W/wine winecfg /v 2>/dev/null)"
 echo "==> Windows version now: \$(\$W/wine winecfg /v 2>/dev/null)"
 echo "==> Running the WebView2 installer (silent; can take several minutes, errors show below)"
 \$W/wine \$HOME/.cache/$EXE /silent /install || echo "installer exit code: \$?"
+echo "==> Making WebView2 itself see Windows 7 (as Proton and Vinegar do); without it msedgewebview2.exe dies at startup"
+\$W/wine reg add "HKCU\\\\Software\\\\Wine\\\\AppDefaults\\\\msedgewebview2.exe" /v Version /d win7 /f
 echo "==> Disabling the Edge updater (its services never exit, and an update could break WebView2 under Wine)"
 for svc in edgeupdate edgeupdatem; do
   \$W/wine reg add "HKLM\\\\System\\\\CurrentControlSet\\\\Services\\\\\$svc" /v Start /t REG_DWORD /d 4 /f
