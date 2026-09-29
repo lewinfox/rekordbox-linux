@@ -70,6 +70,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     icoutils \
  && rm -rf /var/lib/apt/lists/*
 
+# Microsoft core fonts (real Arial, Verdana...). rekordbox's UI is Arial and draws
+# through DirectWrite, which ignores Wine's font replacements; without Arial, text
+# (BPM values etc.) is set in a wider fallback and truncated with ellipses.
+# Installing means accepting Microsoft's core fonts EULA.
+RUN echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections \
+ && apt-get update && apt-get install -y --no-install-recommends ttf-mscorefonts-installer \
+ && fc-list | grep -qi "Arial.ttf" \
+ && rm -rf /var/lib/apt/lists/*
+
 # Non-root user matching the host uid, in the host's audio group (gid 29).
 RUN (userdel -r ubuntu 2>/dev/null || true) \
  && groupadd -g $GID dj && useradd -m -u $UID -g $GID -G audio -s /bin/bash dj
