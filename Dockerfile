@@ -80,13 +80,18 @@ RUN echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula sele
  && rm -rf /var/lib/apt/lists/*
 
 # Patched dwrite.dll (Wine's text drawing). Stock Wine reads a NULL pointer on some
-# track names (emoji etc.) and rekordbox's window freezes; see the patch. Builds only
-# that DLL from the matching Wine source, borrowing import libraries from the package.
-COPY files/dwrite-null-text.patch /tmp/dwrite-null-text.patch
+# track names (emoji etc.) and rekordbox's window freezes, and it has no fallback font
+# for emoji, so they draw as empty boxes; see the patches. Symbola supplies the emoji
+# glyphs. Builds only that DLL from the matching Wine source, borrowing import
+# libraries from the package.
+RUN apt-get update && apt-get install -y --no-install-recommends fonts-symbola \
+ && fc-list | grep -qi "Symbola" \
+ && rm -rf /var/lib/apt/lists/*
+COPY files/dwrite-null-text.patch files/dwrite-emoji-fallback.patch /tmp/
 RUN v="${WINE_PKG_VER%%~*}" && pe=/opt/wine-staging/lib/wine/x86_64-windows \
  && mkdir /tmp/wb && cd /tmp/wb \
  && curl -fsSL "https://dl.winehq.org/wine/source/${v%%.*}.x/wine-$v.tar.xz" | tar -xJ \
- && cd "wine-$v" && patch -p1 < /tmp/dwrite-null-text.patch \
+ && cd "wine-$v" && for p in /tmp/dwrite-*.patch; do patch -p1 < "$p" || exit 1; done \
  && ./configure --enable-win64 --disable-tests >/dev/null \
  && make -j"$(nproc)" tools/winebuild/winebuild >/dev/null \
  && for t in $(grep -oE '^dlls/[^ :]+/x86_64-windows/lib[^ :]+\.a:' Makefile | tr -d ':' | sort -u); do \
@@ -95,8 +100,9 @@ RUN v="${WINE_PKG_VER%%~*}" && pe=/opt/wine-staging/lib/wine/x86_64-windows \
  && touch -d '+1 day' dlls/*/x86_64-windows/lib*.a \
  && make -j"$(nproc)" dlls/dwrite/x86_64-windows/dwrite.dll >/dev/null \
  && [ "$(strings -a dlls/dwrite/x86_64-windows/dwrite.dll | grep -c RBW-DWRITE)" -gt 0 ] \
+ && [ "$(strings -a -el dlls/dwrite/x86_64-windows/dwrite.dll | grep -c Symbola)" -gt 0 ] \
  && install -m644 dlls/dwrite/x86_64-windows/dwrite.dll "$pe/dwrite.dll" \
- && cd / && rm -rf /tmp/wb /tmp/dwrite-null-text.patch
+ && cd / && rm -rf /tmp/wb /tmp/dwrite-*.patch
 
 # Non-root user matching the host uid, in the host's audio group (gid 29).
 RUN (userdel -r ubuntu 2>/dev/null || true) \
