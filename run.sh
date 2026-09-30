@@ -91,7 +91,16 @@ if [[ "${1:-}" == bash ]]; then
 else
   # Wait (up to 10 s) for devmirror's first pass, so Wine's startup drive scan finds
   # sticks that are already plugged in.
-  docker run "${args[@]}" rekordbox-wine sh -c \
-    'for i in $(seq 50); do [ -e /dev/.devmirror-ready ] && break; sleep 0.2; done; exec rekordbox-wine "$@"' \
+  # Then turn off Wine's tray icons: GNOME on Wayland draws rekordboxAgent's as a
+  # black square. Once per prefix; skipped for --check, which changes nothing.
+  docker run "${args[@]}" rekordbox-wine sh -c '
+    for i in $(seq 50); do [ -e /dev/.devmirror-ready ] && break; sleep 0.2; done
+    D=$HOME/.local/share/rekordbox-wine
+    if [ "${1:-}" != --check ] && [ -f "$D/prefix/user.reg" ] && ! grep -q "\"NoTrayItemsDisplay\"=dword:00000001" "$D/prefix/user.reg"; then
+      WINEPREFIX=$D/prefix WINESERVER=$D/wine/bin/wineserver WINEDEBUG=-all \
+        "$D/wine/bin/wine" reg add "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer" \
+        /v NoTrayItemsDisplay /t REG_DWORD /d 1 /f >/dev/null 2>&1 || true
+    fi
+    exec rekordbox-wine "$@"' \
     rekordbox-wine "$@"
 fi
