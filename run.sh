@@ -19,6 +19,7 @@ args=(
   --ipc=host                                   # X11 shared memory
   --cap-add SYS_NICE --ulimit rtprio=95 --ulimit memlock=-1
   --security-opt apparmor=unconfined           # lets Wine reach UDisks on the system D-Bus (USB drives)
+  -e LC_ALL=C.UTF-8                            # without it Wine garbles non-ASCII filenames (ō, é) and can't open them
   # screen (XWayland)
   -e DISPLAY="${DISPLAY:-:0}" -v /tmp/.X11-unix:/tmp/.X11-unix:ro
   # sound: raw ALSA for the controller, PipeWire for the laptop speakers
