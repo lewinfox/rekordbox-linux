@@ -15,8 +15,10 @@ make container                # just (re)build the image
 ```
 
 Plug the DDJ-400 in before `./run.sh`: Docker only sees devices present at start.
-The Wine prefix and rekordbox library live in `data/`. `~/Music` is shared in and
-appears in rekordbox as `C:\users\dj\Music`.
+The Wine prefix and rekordbox library live in `~/.local/share/rekordbox-wine` (`$XDG_DATA_HOME`),
+downloads in `~/.cache/rekordbox-wine`. Your music folder (`xdg-user-dir MUSIC`, usually `~/Music`)
+is shared in and appears in rekordbox as `C:\users\dj\Music`. The library itself is at
+`~/.local/share/rekordbox-wine/prefix/drive_c/users/dj/AppData/Roaming/Pioneer/rekordbox`.
 
 ## Gotchas found getting this working on Ubuntu
 
@@ -27,7 +29,7 @@ appears in rekordbox as `C:\users\dj\Music`.
   `plugins-base` alone can't read MP3. Needs `plugins-good`/`ugly`/`libav`.
 - The container also needs Mesa GL/Vulkan drivers, and audio sockets mounted outside
   `XDG_RUNTIME_DIR` (Docker creates their parent dirs as root, which PulseAudio rejects).
-- After changing the patched Wine files, delete `data/rekordbox-wine/wine`; the launcher
+- After changing the patched Wine files, delete `~/.local/share/rekordbox-wine/wine`; the launcher
   rebuilds its private Wine tree but only checks patch markers, not contents.
 - `--check` warnings about udev rules, ntsync-at-boot and rtkit look inside the container;
   `host-setup.sh` handles them on the host.

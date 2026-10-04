@@ -8,7 +8,7 @@
 set -euo pipefail
 cd "$(dirname "$(readlink -f "$0")")"
 ROOT="$PWD"
-PREFIX="$ROOT/data/rekordbox-wine/prefix"
+source ./paths.sh
 APPS="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
 
 exe="$(ls -d "$PREFIX/drive_c/Program Files/rekordbox/rekordbox "*/rekordbox.exe 2>/dev/null | sort -V | tail -1)"
