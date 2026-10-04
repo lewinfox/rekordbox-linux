@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$(readlink -f "$0")")"
 ROOT="$PWD"
 IMAGE=rekordbox-wine
-PREFIX="$ROOT/data/rekordbox-wine/prefix"
+source ./paths.sh
 APPS="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
 ICONS="${XDG_DATA_HOME:-$HOME/.local/share}/icons/hicolor"
 
@@ -41,7 +41,7 @@ if exe="$(rekordbox_exe)" && [[ -n $exe ]]; then
   echo "Already installed: ${exe#"$PREFIX/drive_c/"}"
   echo "(rekordbox updates itself from inside the app.)"
 else
-  echo "Downloads the latest rekordbox (~660 MB) from rekordbox.com into data/."
+  echo "Downloads the latest rekordbox (~660 MB) from rekordbox.com into $DATA."
   echo "A language dialog will appear: press Return."
   if ask "Download and install rekordbox now?"; then
     "$ROOT/run.sh" --install --latest
@@ -112,5 +112,5 @@ cat <<EOF
   Controller:    plug the DDJ-400 in at any time (but Rekordbox may need a restart to pick it up)
   Music:         ~/Music appears in rekordbox as C:\\users\\dj\\Music
                  (File > Import > Import Folder)
-  Data:          $ROOT/data  (Wine prefix + rekordbox library; back this up)
+  Data:          $DATA  (Wine prefix + rekordbox library; back this up)
 EOF

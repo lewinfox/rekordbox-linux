@@ -8,10 +8,8 @@
 set -euo pipefail
 cd "$(dirname "$(readlink -f "$0")")"
 
-DATA="$PWD/data"          # Wine prefix + rekordbox library/settings
-mkdir -p "$DATA/rekordbox-wine" "$DATA/cache"
-MUSIC="${MUSIC:-$HOME/Music}"
-RUNTIME="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+source ./paths.sh
+mkdir -p "$DATA" "$CACHE"
 
 args=(
   --rm --name rekordbox
@@ -30,8 +28,8 @@ args=(
   --device-cgroup-rule='b 8:* r'
   -v /run/udev:/run/udev:ro
   # data
-  -v "$DATA/rekordbox-wine:/home/dj/.local/share/rekordbox-wine"
-  -v "$DATA/cache:/home/dj/.cache"
+  -v "$DATA:/home/dj/.local/share/rekordbox-wine"
+  -v "$CACHE:/home/dj/.cache"
   -v "$MUSIC:/home/dj/Music"
 )
 
@@ -63,7 +61,8 @@ if [[ -t 0 ]]; then args+=(-it); elif [[ "${1:-}" == bash ]]; then args+=(-i); f
 # Browser bridge: the container's xdg-open writes URLs to this FIFO, and we open
 # http(s) ones in the host browser (logins to SoundCloud etc.). Nothing else is
 # accepted, so the container can't make the host open files or run handlers.
-BRIDGE="$DATA/open-url.fifo"
+mkdir -p -m 700 "$RUNTIME/rekordbox-wine"
+BRIDGE="$RUNTIME/rekordbox-wine/open-url.fifo"
 rm -f "$BRIDGE" && mkfifo -m 600 "$BRIDGE"
 args+=(-v "$BRIDGE:/run/open-url")
 (

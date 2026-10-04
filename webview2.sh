@@ -7,14 +7,14 @@ set -euo pipefail
 cd "$(dirname "$(readlink -f "$0")")"
 
 EXE=MicrosoftEdgeWebView2RuntimeInstallerX64.exe
-CACHE=data/cache
+source ./paths.sh
 mkdir -p "$CACHE"
 
 if docker ps --format '{{.Names}}' | grep -qx rekordbox; then
   echo "rekordbox is running; close it first." >&2; exit 1
 fi
 
-if [[ ! -f $CACHE/$EXE ]] && ! ls "data/rekordbox-wine/prefix/drive_c/Program Files (x86)/Microsoft/EdgeWebView/Application/"[0-9]* >/dev/null 2>&1; then
+if [[ ! -f $CACHE/$EXE ]] && ! ls "$PREFIX/drive_c/Program Files (x86)/Microsoft/EdgeWebView/Application/"[0-9]* >/dev/null 2>&1; then
   echo "==> Downloading the WebView2 standalone installer (~200 MB)"
   curl -fL --progress-bar -o "$CACHE/$EXE.part" "https://go.microsoft.com/fwlink/?linkid=2124701"
   mv "$CACHE/$EXE.part" "$CACHE/$EXE"
